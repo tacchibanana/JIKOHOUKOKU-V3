@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>報告アプリ_Tacchibanana_V2.0_A4</title>
+    <title>報告アプリ_Tacchibanana_V2.1_A4</title>
  
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23E8F5E9'/%3E%3Crect x='130' y='140' width='252' height='300' rx='24' fill='%23FFFFFF' stroke='%23A5D6A7' stroke-width='12'/%3E%3Crect x='190' y='90' width='132' height='60' rx='20' fill='%2381C784'/%3E%3Cline x1='180' y1='210' x2='332' y2='210' stroke='%23C8E6C9' stroke-width='14' stroke-linecap='round'/%3E%3Cline x1='180' y1='260' x2='332' y2='260' stroke='%23C8E6C9' stroke-width='14' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='345' r='36' fill='%23FFB74D'/%3E%3Cpath d='M256 322 L256 352' stroke='%23FFFFFF' stroke-width='8' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='368' r='5' fill='%23FFFFFF'/%3E%3C/svg%3E">
  
@@ -95,6 +95,13 @@
  
         .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--dark); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 2000; max-width: 90%; box-shadow: 0 4px 12px rgba(0,0,0,.3); display: none; }
  
+        .st-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: #f8fafc; }
+        .drive-list { display: flex; flex-direction: column; gap: 6px; max-height: 55vh; overflow-y: auto; }
+        .drive-item { text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 13px; color: #1e293b; }
+        .drive-item:hover { background: #eef2ff; }
+        .drive-item small { display: block; color: #64748b; font-size: 11px; margin-top: 2px; }
+        .drive-item.current { border-color: #6366f1; }
+ 
         footer { text-align: center; padding: 15px 0; color: #64748b; font-size: 12px; line-height: 1.6; }
  
         @media (max-width: 640px) {
@@ -159,10 +166,31 @@
  
 <div id="settingsModal" class="modal input-only">
     <div class="modal-content">
-        <h3 style="margin-top:0;">⚙️ 定型文マスター登録</h3>
-        <div id="master-editor" style="max-height: 60vh; overflow-y: auto;"></div>
+        <h3 style="margin-top:0;">⚙️ 設定</h3>
+        <div style="max-height: 65vh; overflow-y: auto;">
+            <div class="st-box">
+                <h4 style="margin:0 0 8px;">☁️ 保存先</h4>
+                <select id="st_mode" onchange="toggleStorageFields()">
+                    <option value="local">この端末（JSONファイルをダウンロード）</option>
+                    <option value="gas">Googleドライブ（Apps Script経由）</option>
+                </select>
+                <div id="st_gas_box" style="margin-top:8px; display:none;">
+                    <label>Apps ScriptのウェブアプリURL</label>
+                    <input type="url" id="st_url" placeholder="https://script.google.com/macros/s/…/exec">
+                    <label style="margin-top:6px; display:block;">合言葉</label>
+                    <input type="password" id="st_token" autocomplete="off">
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                        <button class="btn-pick" style="padding:6px 12px;" onclick="testDrive()">🔌 接続テスト</button>
+                        <span id="st_result" class="hint"></span>
+                    </div>
+                    <p class="hint" style="margin:8px 0 0;">URLと合言葉は保存用スクリプトを設置した管理者から受け取ってください。この端末のブラウザ内に保存されます。</p>
+                </div>
+            </div>
+            <h4 style="margin:16px 0 0;">📋 定型文マスター</h4>
+            <div id="master-editor"></div>
+        </div>
         <div style="margin-top:20px; display:flex; gap:10px;">
-            <button class="btn" style="background:var(--success); flex:1;" onclick="saveMaster()">保存</button>
+            <button class="btn" style="background:var(--success); flex:1;" onclick="saveSettings()">保存</button>
             <button class="btn" style="background:#eee; color:#333; flex:1;" onclick="toggleModal('settingsModal', false)">閉じる</button>
         </div>
     </div>
@@ -187,6 +215,17 @@
         </div>
         <p class="hint" style="margin:0 0 10px;">利用者名は印刷されません。発生日時は「年月＋2時間ごとの時間帯」、サービス提供開始は「年月」で出力されます。</p>
         <div id="preview-body" style="border:1px solid #ddd; padding:12px; overflow-x:auto;"></div>
+    </div>
+</div>
+ 
+<div id="driveModal" class="modal input-only">
+    <div class="modal-content">
+        <h3 style="margin-top:0;">☁️ Googleドライブから読込</h3>
+        <div id="drive-list" class="drive-list"></div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+            <button class="btn" style="background:#64748b; flex:1; font-size:0.85rem;" onclick="document.getElementById('load-file').click()">📂 端末のファイルから</button>
+            <button class="btn" style="background:#eee; color:#333; flex:1; font-size:0.85rem;" onclick="toggleModal('driveModal', false)">閉じる</button>
+        </div>
     </div>
 </div>
  
@@ -409,8 +448,8 @@
  
         <div class="action-bar input-only">
             <button class="btn" style="background:#0ea5e9;" onclick="newReport()">🆕 新規</button>
-            <button class="btn" style="background:var(--accent);" onclick="downloadJSON()">📁 保存</button>
-            <label class="btn" style="background:#64748b; cursor:pointer; margin:0; font-size:0.95rem; color:white;">📂 読込 <input type="file" id="load-file" accept=".json" style="display:none;" onchange="loadJSON(event)"></label>
+            <button class="btn" id="btn-save" style="background:var(--accent);" onclick="saveReport()">📁 保存</button>
+            <button class="btn" id="btn-load" style="background:#64748b;" onclick="openLoad()">📂 読込</button>
             <button class="btn btn-official" style="background:#6366f1;" onclick="openPreview()">👁 様式プレビュー</button>
             <button class="btn btn-official" style="background:var(--primary);" onclick="printAs('official')">🖨️ 行政様式で印刷</button>
             <button class="btn" style="background:var(--success);" onclick="printAs('internal')">🖨️ 事業所内控え</button>
@@ -418,19 +457,20 @@
     </div>
  
     <footer class="input-only">
-        ©️ONMUSUBI 2026 - Version 2.0<br>
+        ©️ONMUSUBI 2026 - Version 2.1<br>
         事故報告様式：令和8年10月21日付 厚生労働省事務連絡（介護保険最新情報Vol.1548）の改正案に対応。<br>
         改正案は調整中のため、令和9年4月頃の報告システム稼働時に様式が変わる可能性があります。
     </footer>
 </div>
  
+<input type="file" id="load-file" accept=".json,application/json" style="display:none;" onchange="loadJSON(event)">
 <div id="official-print"></div>
 <div id="toast" class="toast"></div>
  
 <script>
 /* ================= 定義 ================= */
 const SCHEMA = 'jiko-v2';
-const KEY = { save: 'save_v2_0', master: 'master_v2_0', office: 'office_v2_0', saveV1: 'save_v1_0', masterV1: 'master_v1_0' };
+const KEY = { save: 'save_v2_0', master: 'master_v2_0', office: 'office_v2_0', storage: 'storage_v2_0', saveV1: 'save_v1_0', masterV1: 'master_v1_0' };
  
 // 選択肢（値, 表示ラベル）。様式改正時はここを修正する。
 const OPT = {
@@ -509,6 +549,12 @@ FACTORS.forEach(([k, l]) => { labelMap['c_' + k] = `原因：${l}`; labelMap['p_
 let masterData = clone(DEFAULT_MASTER);
 let photoList = [];
 let saveTimer = null;
+// 報告ごとの管理情報（画面には表示しない）
+let meta = { report_id: '', drive_file_id: '', drive_updated: 0 };
+function newId() {
+    try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) { }
+    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
  
 /* ================= ユーティリティ ================= */
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -540,7 +586,10 @@ function showToast(msg) {
     clearTimeout(t._h); t._h = setTimeout(() => { t.style.display = 'none'; }, 3500);
 }
 function autoResize(el) { if (!el) return; el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
-function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; if (show && id === 'settingsModal') renderMasterEditor(); }
+function toggleModal(id, show) {
+    document.getElementById(id).style.display = show ? 'block' : 'none';
+    if (show && id === 'settingsModal') { renderMasterEditor(); loadStorageFields(); }
+}
  
 /* ================= 描画 ================= */
 function renderGroups() {
@@ -613,6 +662,7 @@ function collect() {
     });
     d.timeline = readTimeline();
     d.photos = photoList;
+    Object.assign(d, meta);
     return d;
 }
 function apply(d) {
@@ -628,6 +678,7 @@ function apply(d) {
     tl.forEach(r => addTlRow(r.t, r.text));
     for (let i = tl.length; i < 3; i++) addTlRow();
     photoList = d.photos || [];
+    meta = { report_id: d.report_id || newId(), drive_file_id: d.drive_file_id || '', drive_updated: d.drive_updated || 0 };
     renderPhotos();
     updateImpactUI();
     updateDerived();
@@ -705,7 +756,14 @@ function updateStatus() {
     const done = req.length - missing.length;
     box.className = 'status-box input-only' + (missing.length ? ' warn' : '');
     box.innerHTML = `<div><b>第1報（項目1〜6）入力状況：${done}/${req.length}</b>${deadline ? '　' + deadline : ''}</div>` +
-        (missing.length ? `<div class="missing">未入力：${missing.join('、')}</div>` : '<div class="missing">第1報に必要な主な項目は入力済みです。</div>');
+        (missing.length ? `<div class="missing">未入力：${missing.join('、')}</div>` : '<div class="missing">第1報に必要な主な項目は入力済みです。</div>') +
+        driveStatusLine();
+}
+function driveStatusLine() {
+    if (!driveEnabled()) return '';
+    if (!meta.drive_file_id) return '<div class="missing">☁️ Googleドライブ：未保存（入力内容はこの端末にだけ保存されています）</div>';
+    const t = meta.drive_updated ? new Date(meta.drive_updated).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    return `<div class="missing">☁️ Googleドライブ：保存済み（${t}）。修正したら再度「☁️ 保存」してください。</div>`;
 }
  
 /* ================= 行政提出様式 ================= */
@@ -864,11 +922,16 @@ function renderMasterEditor() {
         container.appendChild(wrap);
     });
 }
-function saveMaster() {
+function saveSettings() {
     Object.keys(masterData).forEach(k => { masterData[k] = masterData[k].filter(v => v.trim()); });
     localStorage.setItem(KEY.master, JSON.stringify(masterData));
+    const s = readStorageFields();
+    if (s.mode === 'gas' && (!s.url || !s.token)) { alert('Googleドライブに保存するには、URLと合言葉の両方を入力してください。'); return; }
+    if (s.mode === 'gas' && !/^https:\/\/script\.google\.com\//.test(s.url)) { alert('URLは https://script.google.com/ で始まるApps ScriptのウェブアプリURLを入力してください。'); return; }
+    localStorage.setItem(KEY.storage, JSON.stringify(s));
+    updateSaveButtons(); updateStatus();
     toggleModal('settingsModal', false);
-    showToast('定型文を保存しました');
+    showToast('設定を保存しました');
 }
 // target: 要素ID（追記）または関数
 function pickTo(masterKey, target) {
@@ -981,13 +1044,127 @@ function migrateMasterV1(m) {
     return out;
 }
  
-/* ================= ファイル保存・読込 ================= */
+/* ================= 保存先の設定 ================= */
+function storageSettings() {
+    try { return Object.assign({ mode: 'local', url: '', token: '' }, JSON.parse(localStorage.getItem(KEY.storage) || '{}')); }
+    catch { return { mode: 'local', url: '', token: '' }; }
+}
+function driveEnabled() { const s = storageSettings(); return s.mode === 'gas' && !!s.url && !!s.token; }
+function readStorageFields() {
+    return { mode: document.getElementById('st_mode').value, url: document.getElementById('st_url').value.trim(), token: document.getElementById('st_token').value };
+}
+function loadStorageFields() {
+    const s = storageSettings();
+    document.getElementById('st_mode').value = s.mode;
+    document.getElementById('st_url').value = s.url;
+    document.getElementById('st_token').value = s.token;
+    document.getElementById('st_result').textContent = '';
+    toggleStorageFields();
+}
+function toggleStorageFields() {
+    document.getElementById('st_gas_box').style.display = document.getElementById('st_mode').value === 'gas' ? 'block' : 'none';
+}
+function updateSaveButtons() {
+    const on = driveEnabled();
+    document.getElementById('btn-save').textContent = on ? '☁️ 保存' : '📁 保存';
+    document.getElementById('btn-load').textContent = on ? '☁️ 読込' : '📂 読込';
+}
+ 
+/* ================= Googleドライブ（Apps Script経由） ================= */
+// Content-Type を text/plain にして CORS のプリフライトを避ける（Apps Script の制約）
+async function driveCall(action, payload = {}, settings) {
+    const s = settings || storageSettings();
+    if (!s.url || !s.token) throw new Error('保存先が設定されていません（⚙️から設定）');
+    let res;
+    try {
+        res = await fetch(s.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action, token: s.token }, payload)) });
+    } catch (e) { throw new Error('通信できませんでした。電波状況を確認してください'); }
+    let j;
+    try { j = await res.json(); } catch (e) { throw new Error('保存先から正しい応答がありません（URLやスクリプトの公開設定を確認）'); }
+    if (!j.ok) { const err = new Error(j.error || '処理に失敗しました'); err.conflict = !!j.conflict; throw err; }
+    return j;
+}
+async function testDrive() {
+    const out = document.getElementById('st_result');
+    out.textContent = '接続中…';
+    try {
+        const j = await driveCall('ping', {}, Object.assign(readStorageFields(), { mode: 'gas' }));
+        out.textContent = `✅ 接続OK（保存先フォルダ：${j.folder}）`;
+    } catch (e) { out.textContent = '❌ ' + e.message; }
+}
+function setBusy(on) {
+    ['btn-save', 'btn-load'].forEach(id => { document.getElementById(id).disabled = on; });
+}
+function reportFileName(d) {
+    return `事故報告_${(d.event_date || '').slice(0, 10) || '日付未入力'}_${(d.report_id || '').slice(0, 8)}.json`;
+}
+function reportSummary(d) {
+    const kind = (d.groups.report_kind || []).map(v => v === '第n報' ? `第${d.report_no_n || '＿'}報` : v).join('');
+    return [d.main_title_select.replace(/\s/g, ''), d.user_name, withOther(d.groups.acc_type, d.acc_type_other), kind].filter(Boolean).join(' / ');
+}
+async function saveToDrive(force = false) {
+    autoSave();
+    const d = collect();
+    setBusy(true); showToast('Googleドライブに保存中…');
+    try {
+        const j = await driveCall('save', {
+            name: reportFileName(d), description: reportSummary(d), data: d,
+            fileId: meta.drive_file_id || '', baseUpdated: force ? 0 : (meta.drive_updated || 0)
+        });
+        meta.drive_file_id = j.fileId; meta.drive_updated = j.updated;
+        autoSave();
+        showToast('Googleドライブに保存しました');
+    } catch (err) {
+        if (err.conflict) {
+            setBusy(false);
+            if (confirm('このデータは他の端末で更新されています。上書きしますか？\n（キャンセルすると保存しません。「☁️ 読込」で最新版を確認できます）')) return saveToDrive(true);
+        } else {
+            showToast('ドライブに保存できませんでした：' + err.message + '（入力内容はこの端末には保存されています）');
+        }
+    } finally { setBusy(false); }
+}
+async function openDriveList() {
+    const box = document.getElementById('drive-list');
+    box.innerHTML = '<p class="hint">読み込み中…</p>';
+    toggleModal('driveModal', true);
+    try {
+        const j = await driveCall('list');
+        if (!j.files.length) { box.innerHTML = '<p class="hint">保存先フォルダに報告はまだありません。</p>'; return; }
+        box.innerHTML = '';
+        j.files.forEach(f => {
+            const b = document.createElement('button');
+            b.className = 'drive-item' + (f.id === meta.drive_file_id ? ' current' : '');
+            const t = new Date(f.updated).toLocaleString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            b.innerHTML = `${esc(f.description || f.name)}${f.id === meta.drive_file_id ? '　<b>（表示中）</b>' : ''}<small>${esc(f.name)}　更新：${t}</small>`;
+            b.onclick = () => loadFromDrive(f.id);
+            box.appendChild(b);
+        });
+    } catch (e) { box.innerHTML = `<p class="hint">❌ ${esc(e.message)}</p>`; }
+}
+async function loadFromDrive(fileId) {
+    if (fileId !== meta.drive_file_id && !confirm('現在の入力内容をこの報告に置き換えます。よろしいですか？')) return;
+    try {
+        const j = await driveCall('get', { fileId });
+        let data = j.data;
+        if (data.schema !== SCHEMA) data = migrateV1(data);
+        data.drive_file_id = fileId; data.drive_updated = j.updated;
+        apply(data); autoSave();
+        toggleModal('driveModal', false);
+        showToast('Googleドライブから読み込みました');
+    } catch (e) { showToast('読み込めませんでした：' + e.message); }
+}
+ 
+/* ================= 保存・読込（振り分け） ================= */
+function saveReport() { driveEnabled() ? saveToDrive() : downloadJSON(); }
+function openLoad() { driveEnabled() ? openDriveList() : document.getElementById('load-file').click(); }
+ 
+/* ================= ファイル保存・読込（端末） ================= */
 function downloadJSON() {
     autoSave();
     const d = collect();
     const blob = new Blob([JSON.stringify(d)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `report_${(d.event_date || '').slice(0, 10) || 'nodate'}_${Date.now()}.json`; a.click();
+    a.download = reportFileName(d); a.click();
 }
 function loadJSON(event) {
     const file = event.target.files[0];
@@ -999,6 +1176,7 @@ function loadJSON(event) {
             const fromV1 = data.schema !== SCHEMA;
             if (fromV1) data = migrateV1(data);
             apply(data); autoSave();
+            toggleModal('driveModal', false);
             showToast(fromV1 ? '旧形式（V1.0）のデータを新様式に変換して読み込みました。種別・場所・原因分析を確認してください。' : 'データを読み込みました');
         } catch (err) { alert("JSONファイルの形式が不正です。"); }
         event.target.value = "";
@@ -1022,6 +1200,7 @@ function loadData() {
         else if (s1) { apply(migrateV1(JSON.parse(s1))); autoSave(); showToast('V1.0の入力中データを新様式に移行しました。種別・場所・原因分析を確認してください。'); }
         else apply(blankReport());
     } catch { apply(blankReport()); }
+    updateSaveButtons();
     updateStatus();
 }
 window.onload = loadData;
