@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>報告アプリ_Tacchibanana_V2.0_A4</title>
+ 
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23E8F5E9'/%3E%3Crect x='130' y='140' width='252' height='300' rx='24' fill='%23FFFFFF' stroke='%23A5D6A7' stroke-width='12'/%3E%3Crect x='190' y='90' width='132' height='60' rx='20' fill='%2381C784'/%3E%3Cline x1='180' y1='210' x2='332' y2='210' stroke='%23C8E6C9' stroke-width='14' stroke-linecap='round'/%3E%3Cline x1='180' y1='260' x2='332' y2='260' stroke='%23C8E6C9' stroke-width='14' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='345' r='36' fill='%23FFB74D'/%3E%3Cpath d='M256 322 L256 352' stroke='%23FFFFFF' stroke-width='8' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='368' r='5' fill='%23FFFFFF'/%3E%3C/svg%3E">
+ 
+    <style>
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f4f7f9; --card: #ffffff; --border: #cbd5e1; --success: #27ae60; --orange: #e67e22; --dark: #1e293b; --danger: #e74c3c; --info: #3498db; --label-bg: #f1f5f9; }
+        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; line-height: 1.3; }
+        .app-container { max-width: 850px; margin: auto; position: relative; }
+ 
+        .title-selector-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; border-bottom: 3px double var(--primary); padding-bottom: 10px; }
+        .title-select { font-size: 1.4rem; font-weight: bold; color: var(--primary); border: none; background: transparent; text-align: center; cursor: pointer; letter-spacing: 0.1em; flex-grow: 1; outline: none; appearance: none; -webkit-appearance: none; }
+ 
+        .btn-settings { position: fixed; top: 10px; right: 10px; z-index: 100; background: var(--dark); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; }
+        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 10px; position: relative; box-sizing: border-box; }
+        .modal-content.wide { max-width: 820px; margin: 2% auto; }
+ 
+        #photo-list { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; background: #fff; min-height: 0; }
+        .photo-item { position: relative; width: 70px; height: 70px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; }
+        .btn-del-img { position: absolute; top: 0; right: 0; background: rgba(231, 76, 60, 0.9); color: white; border: none; font-size: 12px; padding: 2px 6px; cursor: pointer; }
+ 
+        .card { background: var(--card); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); padding: 15px; border: 1px solid var(--border); }
+        .section-title { background: #475569; color: white; padding: 5px 10px; font-weight: bold; margin-top: 12px; font-size: 0.85rem; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .section-title.internal { background: #8a6d3b; }
+        .section-title .note { font-weight: normal; font-size: 0.7rem; opacity: 0.9; }
+        .content-box { border: 1px solid #475569; border-radius: 0 0 4px 4px; overflow: hidden; background: #fff; margin-bottom: 5px; }
+        .content-box.internal { border-color: #8a6d3b; }
+        .input-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+        .field { display: flex; flex-direction: column; }
+        label { font-weight: bold; font-size: 0.75rem; color: var(--primary); margin-bottom: 2px; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: inherit; }
+        textarea { min-height: 60px; resize: none; width: 100%; display: block; }
+        .content-box > textarea { border: none; border-radius: 0; }
+ 
+        /* 様式の行レイアウト */
+        .row { display: grid; grid-template-columns: 170px 1fr; border-bottom: 1px solid #e2e8f0; }
+        .row:last-child { border-bottom: none; }
+        .rl { background: var(--label-bg); font-size: 12px; font-weight: bold; color: var(--primary); padding: 8px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+        .rl small { font-weight: normal; color: #64748b; font-size: 10.5px; }
+        .rv { padding: 6px 8px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .mini-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+        .mini-grid .field label { font-size: 11px; }
+        .hint { font-size: 11px; color: #64748b; }
+        .derived { font-size: 12px; color: #1e40af; background: #eff6ff; border-radius: 4px; padding: 4px 8px; }
+ 
+        .chk-group { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+        label.chk { font-weight: normal; font-size: 13px; color: #1e293b; display: inline-flex; align-items: center; gap: 5px; margin: 0; cursor: pointer; padding: 3px 0; }
+        label.chk input { width: auto; margin: 0; padding: 0; transform: scale(1.15); }
+        .inline-input { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
+        .inline-input input { width: auto; flex: 1; min-width: 120px; padding: 6px; }
+        .inline-input input.short, .report-kind .inline-input input.short { flex: 0 0 70px; min-width: 0; }
+        .inline-input label.chk input { flex: none; min-width: 0; padding: 0; }
+ 
+        .vital-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 8px; background: #f8fafc; border-bottom: 1px solid #eee; }
+ 
+        #impact_desc_box { background: #fffde7; padding: 8px; border: 1px solid #fbc02d; border-radius: 6px; font-size: 12px; }
+        .impact-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-weight: bold; color: white; font-size: 11px; margin-bottom: 2px; }
+ 
+        .btn-pick { background: #e2e8f0; border: none; border-radius: 4px; padding: 3px 8px; font-size: 11px; cursor: pointer; color: #1e293b; font-weight: bold; white-space: nowrap; }
+ 
+        /* 時系列 */
+        #timeline { display: flex; flex-direction: column; gap: 4px; }
+        .tl-row { display: grid; grid-template-columns: 105px 1fr 28px; gap: 6px; align-items: start; }
+        .tl-row input[type=time] { padding: 6px; }
+        .tl-row textarea { min-height: 34px; padding: 6px; border: 1px solid var(--border); }
+        .btn-del-row { background: #fee2e2; color: var(--danger); border: none; border-radius: 4px; height: 34px; cursor: pointer; font-weight: bold; }
+        .tl-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+ 
+        /* 原因分析・再発防止策 */
+        .factor { border-bottom: 1px solid #e2e8f0; }
+        .factor:last-child { border-bottom: none; }
+        .factor-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: var(--label-bg); gap: 8px; }
+        .factor-head .chk, .factor-head .flabel { font-weight: bold; font-size: 12.5px; color: var(--primary); }
+        .factor textarea { border: none; border-radius: 0; min-height: 44px; }
+ 
+        /* ステータス */
+        .status-box { border-radius: 6px; padding: 8px 10px; font-size: 12.5px; margin-bottom: 10px; background: #f0fdf4; border: 1px solid #86efac; color: #14532d; }
+        .status-box.warn { background: #fff7ed; border-color: #fdba74; color: #7c2d12; }
+        .status-box.hh { background: #eff6ff; border-color: #93c5fd; color: #1e3a8a; }
+        .status-box .missing { margin-top: 3px; font-size: 11.5px; }
+        .status-box .late { color: var(--danger); font-weight: bold; }
+ 
+        .report-kind { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 4px; }
+        .report-kind .inline-input input { flex: 0 0 160px; }
+ 
+        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .action-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+ 
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--dark); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 2000; max-width: 90%; box-shadow: 0 4px 12px rgba(0,0,0,.3); display: none; }
+ 
+        footer { text-align: center; padding: 15px 0; color: #64748b; font-size: 12px; line-height: 1.6; }
+ 
+        @media (max-width: 640px) {
+            .row { grid-template-columns: 1fr; }
+            .rl { padding: 6px 8px; }
+            .input-grid { grid-template-columns: repeat(2, 1fr); }
+            .vital-grid { grid-template-columns: repeat(3, 1fr); }
+            .action-bar { grid-template-columns: repeat(2, 1fr); }
+            .tl-row { grid-template-columns: 92px 1fr 28px; }
+        }
+ 
+        /* ===== 行政提出様式（プレビュー・印刷共通） ===== */
+        #official-print { display: none; }
+        .of-doc { font-size: 8.8pt; color: #000; line-height: 1.35; }
+        .of-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px; }
+        .of-title { font-size: 13pt; font-weight: bold; }
+        .of-notes { font-size: 7.5pt; margin: 2px 0 6px; }
+        .of-kind { border: 1px solid #000; padding: 3px 8px; display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .of-instr { text-align: center; font-size: 8pt; margin-bottom: 4px; }
+        table.of { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 5px; page-break-inside: auto; }
+        .of th, .of td { border: 1px solid #333; padding: 3px 5px; vertical-align: top; word-break: break-all; }
+        .of tr { page-break-inside: avoid; }
+        .of th.sec { background: #dbe9f5; text-align: center; vertical-align: middle; font-weight: bold; font-size: 7.5pt; line-height: 1.25; padding: 3px 2px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .of th.sec b { display: block; font-size: 10pt; }
+        .of th.lb { background: #eef4fa; text-align: left; font-weight: normal; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .of .op { display: inline-block; margin-right: 10px; white-space: nowrap; }
+        .of .sub { display: inline-block; margin-left: 14px; padding: 0 4px; background: #eef4fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .of .nt { font-size: 7.5pt; color: #333; }
+        .of table.tl { width: 100%; border-collapse: collapse; }
+        .of table.tl td { border: none; border-bottom: 1px dotted #888; padding: 2px 4px; }
+        .of table.tl td.t { width: 12mm; border-right: 1px solid #888; color: #333; }
+        .of table.tl tr:last-child td { border-bottom: none; }
+ 
+        @media print {
+            @page { size: A4; margin: 12mm; }
+            body { background: white; padding: 0; font-size: 10pt; color: #000; }
+            .app-container { max-width: 100%; width: 100%; margin: 0; }
+            .input-only, .btn-settings, .modal, .btn-pick, .record-gen-section, .btn-del-img, .btn-del-row, footer, .toast { display: none !important; }
+            .card { box-shadow: none; border: none; padding: 0; width: 100%; }
+            input, select, textarea { border: none !important; padding: 2px 0; font-size: 10pt; background: transparent !important; appearance: none; -webkit-appearance: none; width: 100%; box-sizing: border-box; word-break: break-all; }
+            label.chk input { -webkit-appearance: auto; appearance: auto; width: auto; }
+            textarea { height: auto !important; min-height: 1.2em; display: block; overflow: hidden; }
+            .content-box { border: 1px solid #475569; margin-bottom: 8px; page-break-inside: avoid; }
+            .section-title { background: #f0f0f0 !important; color: #000 !important; border: 1px solid #475569; border-bottom: none; -webkit-print-color-adjust: exact; }
+            .rl { background: #f7f7f7 !important; -webkit-print-color-adjust: exact; }
+            .row { grid-template-columns: 150px 1fr; }
+            .vital-grid { background: white; padding: 4px; }
+            .title-selector-container { margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            #photo-list:empty { display: none; }
+            .photo-item { width: 100px; height: 100px; border: 1px solid #999; }
+            .photo-item img { object-fit: contain; }
+            #impact_desc_box { border: 1px solid #ccc; background: #fff !important; }
+ 
+            body[data-print="official"] .app-container { display: none !important; }
+            body[data-print="official"] #official-print { display: block; }
+        }
+    </style>
+</head>
+<body>
+ 
+<button class="btn-settings input-only" onclick="toggleModal('settingsModal', true)" title="定型文マスター">⚙️</button>
+ 
+<div id="settingsModal" class="modal input-only">
+    <div class="modal-content">
+        <h3 style="margin-top:0;">⚙️ 定型文マスター登録</h3>
+        <div id="master-editor" style="max-height: 60vh; overflow-y: auto;"></div>
+        <div style="margin-top:20px; display:flex; gap:10px;">
+            <button class="btn" style="background:var(--success); flex:1;" onclick="saveMaster()">保存</button>
+            <button class="btn" style="background:#eee; color:#333; flex:1;" onclick="toggleModal('settingsModal', false)">閉じる</button>
+        </div>
+    </div>
+</div>
+ 
+<div id="pickerModal" class="modal input-only">
+    <div class="modal-content" style="max-width:380px;">
+        <h4 id="picker-title" style="margin-top:0;">選択</h4>
+        <div id="picker-list" style="display:grid; gap:10px;"></div>
+        <button class="btn" style="background:#666; width:100%; margin-top:20px;" onclick="toggleModal('pickerModal', false)">キャンセル</button>
+    </div>
+</div>
+ 
+<div id="previewModal" class="modal input-only">
+    <div class="modal-content wide">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px;">
+            <h3 style="margin:0; font-size:1rem;">👁 行政提出様式プレビュー</h3>
+            <div style="display:flex; gap:8px;">
+                <button class="btn" style="background:var(--primary); padding:8px 12px; font-size:0.85rem;" onclick="printAs('official')">🖨️ この様式で印刷</button>
+                <button class="btn" style="background:#eee; color:#333; padding:8px 12px; font-size:0.85rem;" onclick="toggleModal('previewModal', false)">閉じる</button>
+            </div>
+        </div>
+        <p class="hint" style="margin:0 0 10px;">利用者名は印刷されません。発生日時は「年月＋2時間ごとの時間帯」、サービス提供開始は「年月」で出力されます。</p>
+        <div id="preview-body" style="border:1px solid #ddd; padding:12px; overflow-x:auto;"></div>
+    </div>
+</div>
+ 
+<div class="app-container">
+    <div class="card">
+        <div class="title-selector-container">
+            <select id="main_title_select" class="title-select" onchange="updateTitleUI(true)">
+                <option value="事 故 報 告 書">事 故 報 告 書</option>
+                <option value="ヒヤリハット報告">ヒヤリハット報告</option>
+            </select>
+        </div>
+ 
+        <div id="status-box" class="status-box input-only"></div>
+ 
+        <div class="report-kind">
+            <div class="chk-group" id="grp_report_kind"></div>
+            <div class="inline-input">第<input type="text" id="report_no_n" class="short" placeholder="2">報</div>
+            <div class="inline-input">提出日 <input type="date" id="submit_date"></div>
+        </div>
+ 
+        <!-- 事業所内管理（行政様式には出力しない） -->
+        <div class="section-title internal"><span>事業所内管理</span><span class="note">※行政提出様式には印刷されません</span></div>
+        <div class="content-box internal">
+            <div class="row"><div class="rl">利用者名・報告者</div><div class="rv">
+                <div class="mini-grid">
+                    <div class="field"><label>利用者名</label><input type="text" id="user_name"></div>
+                    <div class="field"><label>報告者</label><input type="text" id="reporter"></div>
+                </div>
+            </div></div>
+            <div class="row"><div class="rl">影響レベル</div><div class="rv">
+                <div class="mini-grid">
+                    <div class="field">
+                        <select id="impact_level" onchange="updateImpactUI()">
+                            <option value="">未選択</option>
+                            <option value="0">レベル 0</option><option value="1">レベル 1</option><option value="2">レベル 2</option>
+                            <option value="3a">レベル 3a</option><option value="3b">レベル 3b</option><option value="4">レベル 4</option><option value="5">レベル 5</option>
+                        </select>
+                    </div>
+                    <div class="field" style="justify-content:center;"><div id="impact_type_badge"></div></div>
+                </div>
+                <div id="impact_desc_box"><div id="impact_text">レベルを選択すると基準が表示されます</div></div>
+            </div></div>
+        </div>
+ 
+        <!-- 1 受診状況 -->
+        <div class="section-title">1 受診状況</div>
+        <div class="content-box">
+            <div class="row"><div class="rl">医療機関への受診状況</div><div class="rv">
+                <div class="chk-group" id="grp_visit"></div>
+                <input type="text" id="visit_other" placeholder="その他の内容">
+            </div></div>
+        </div>
+ 
+        <!-- 2 事業所の概要 -->
+        <div class="section-title">
+            <span>2 事業所の概要</span>
+            <button class="btn-pick input-only" onclick="saveOffice()">💾 既定値として保存</button>
+        </div>
+        <div class="content-box">
+            <div class="row"><div class="rl">法人</div><div class="rv"><div class="mini-grid">
+                <div class="field"><label>法人名</label><input type="text" id="corp_name"></div>
+                <div class="field"><label>法人番号</label><input type="text" id="corp_no" inputmode="numeric"></div>
+            </div></div></div>
+            <div class="row"><div class="rl">事業所（施設）</div><div class="rv"><div class="mini-grid">
+                <div class="field"><label>事業所（施設）名</label><input type="text" id="office_name"></div>
+                <div class="field"><label>事業所番号</label><input type="text" id="office_no" inputmode="numeric"></div>
+            </div></div></div>
+            <div class="row"><div class="rl">サービス種別<small>介護予防含む</small></div><div class="rv"><div class="mini-grid">
+                <div class="field"><label>サービス種別</label><input type="text" id="service_type" list="service_list" placeholder="例：訪問看護"></div>
+                <div class="field"><label>室数 <span class="hint">（施設系）</span></label><input type="text" id="rooms"></div>
+                <div class="field"><label>定員 <span class="hint">（施設系）</span></label><input type="text" id="capacity"></div>
+            </div></div></div>
+            <div class="row"><div class="rl">所在地<small>市区町村まで</small></div><div class="rv"><div class="mini-grid">
+                <div class="field"><label>都道府県</label><input type="text" id="pref" placeholder="例：福岡県"></div>
+                <div class="field"><label>市区町村</label><input type="text" id="city" placeholder="例：福岡市中央区"></div>
+            </div></div></div>
+        </div>
+        <datalist id="service_list">
+            <option value="訪問介護"><option value="訪問入浴介護"><option value="訪問看護"><option value="介護予防訪問看護"><option value="訪問リハビリテーション">
+            <option value="居宅療養管理指導"><option value="通所介護"><option value="地域密着型通所介護"><option value="通所リハビリテーション"><option value="短期入所生活介護">
+            <option value="短期入所療養介護"><option value="特定施設入居者生活介護"><option value="福祉用具貸与"><option value="定期巡回・随時対応型訪問介護看護">
+            <option value="夜間対応型訪問介護"><option value="認知症対応型通所介護"><option value="小規模多機能型居宅介護"><option value="看護小規模多機能型居宅介護">
+            <option value="認知症対応型共同生活介護"><option value="介護老人福祉施設"><option value="介護老人保健施設"><option value="介護医療院"><option value="居宅介護支援">
+        </datalist>
+ 
+        <!-- 3 利用者 -->
+        <div class="section-title">3 利用者</div>
+        <div class="content-box">
+            <div class="row"><div class="rl">年齢・性別</div><div class="rv">
+                <div class="inline-input">年齢 <input type="number" id="age" class="short" min="0" max="130"> 歳　<span class="chk-group" id="grp_sex"></span></div>
+            </div></div>
+            <div class="row"><div class="rl">サービス提供開始年月・保険者</div><div class="rv"><div class="mini-grid">
+                <div class="field"><label>サービス提供開始年月</label><input type="month" id="start_ym"></div>
+                <div class="field"><label>保険者</label><input type="text" id="insurer" placeholder="例：福岡市"></div>
+            </div></div></div>
+            <div class="row"><div class="rl">住所</div><div class="rv">
+                <div class="chk-group" id="grp_addr"></div>
+                <input type="text" id="addr_city" placeholder="その他の場合：市区町村まで">
+            </div></div>
+            <div class="row"><div class="rl">要介護度</div><div class="rv"><div class="chk-group" id="grp_kaigo"></div></div></div>
+            <div class="row"><div class="rl">障害高齢者の日常生活自立度<small>寝たきり度</small></div><div class="rv"><div class="chk-group" id="grp_shogai"></div></div></div>
+            <div class="row"><div class="rl">認知症高齢者の日常生活自立度</div><div class="rv"><div class="chk-group" id="grp_ninchi"></div></div></div>
+        </div>
+ 
+        <!-- 4 事故の概要 -->
+        <div class="section-title">4 事故の概要</div>
+        <div class="content-box">
+            <div class="row"><div class="rl">発生日時<small>様式上は年月＋時間帯で出力</small></div><div class="rv">
+                <div class="mini-grid">
+                    <div class="field"><label>発生日時（事業所内記録用）</label><input type="datetime-local" id="event_date"></div>
+                    <div class="field"><label>時間帯（2時間ごと）</label><select id="time_band"></select></div>
+                </div>
+                <div id="derived_dt" class="derived"></div>
+            </div></div>
+            <div class="row"><div class="rl">発生場所</div><div class="rv">
+                <div class="chk-group" id="grp_place"></div>
+                <div class="inline-input">
+                    <input type="text" id="place_other" placeholder="その他の内容">
+                    <button class="btn-pick input-only" onclick="setOther('place_other','利用者宅（訪問時）')">＋利用者宅</button>
+                </div>
+            </div></div>
+            <div class="row"><div class="rl">事故の種別<small>該当するものは全て</small></div><div class="rv">
+                <div class="chk-group" id="grp_acc_type"></div>
+                <input type="text" id="acc_type_other" placeholder="その他の内容">
+            </div></div>
+            <div class="row"><div class="rl">事故発生前の利用者の状況・状態<small>普段との違い、疲労度や眠気等</small></div><div class="rv">
+                <div style="display:flex; justify-content:flex-end;"><button class="btn-pick input-only" onclick="pickTo('before','before_state')">📋 定型文</button></div>
+                <textarea id="before_state" placeholder="事故発生前の心身の状態"></textarea>
+            </div></div>
+            <div class="row"><div class="rl">発生時の状況、事故内容の詳細と発生時の対応<small>時刻ごとに記載</small></div><div class="rv">
+                <div id="timeline"></div>
+                <div class="tl-actions input-only">
+                    <button class="btn-pick" onclick="addTlRow(); autoSave();">＋ 行を追加</button>
+                    <button class="btn-pick" onclick="addTlRow(nowHHMM()); autoSave();">⏱ 今の時刻で追加</button>
+                    <button class="btn-pick" onclick="pickTo('situation', text => { addTlRow('', text); })">📋 定型文から追加</button>
+                </div>
+                <div class="hint input-only">行政様式では10行分の欄に出力されます（超える分も続けて出力）。</div>
+            </div></div>
+            <div class="row"><div class="rl">その他特記すべき事項</div><div class="rv"><textarea id="special4" style="min-height:40px;"></textarea></div></div>
+        </div>
+ 
+        <div class="section-title internal"><span>バイタル・ケガの状態</span><span class="note">※事業所内記録</span></div>
+        <div class="content-box internal">
+            <div class="vital-grid">
+                <div class="field"><label>体温</label><input type="number" step="0.1" id="v_temp"></div>
+                <div class="field"><label>血圧</label><input type="text" id="v_bp"></div>
+                <div class="field"><label>脈拍</label><input type="number" id="v_hr"></div>
+                <div class="field"><label>呼吸数</label><input type="number" id="v_rr"></div>
+                <div class="field"><label>SpO2</label><input type="number" id="v_spo2"></div>
+            </div>
+            <input type="text" id="injury" style="border:none;" placeholder="ケガの状態を入力">
+        </div>
+ 
+        <div class="section-title internal">
+            <span>現場・ケガの写真 <span class="note">※事業所内記録</span></span>
+            <label class="btn-pick input-only" style="background:var(--accent); color:white; margin:0;">追加 <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotos(event)"></label>
+        </div>
+        <div id="photo-list" class="content-box internal"></div>
+ 
+        <!-- 5 医療対応の概要 -->
+        <div class="section-title">5 医療対応の概要</div>
+        <div class="content-box">
+            <div class="row"><div class="rl">受診方法</div><div class="rv">
+                <div class="chk-group" id="grp_med_method"></div>
+                <input type="text" id="med_other" placeholder="その他の内容">
+            </div></div>
+            <div class="row"><div class="rl">受診先</div><div class="rv"><input type="text" id="hospital" placeholder="医療機関名"></div></div>
+            <div class="row"><div class="rl">診断名</div><div class="rv"><input type="text" id="diag_name"></div></div>
+            <div class="row"><div class="rl">診断内容</div><div class="rv">
+                <div class="chk-group" id="grp_diag"></div>
+                <div class="mini-grid">
+                    <input type="text" id="fracture_site" placeholder="骨折の部位">
+                    <input type="text" id="diag_other" placeholder="その他の内容">
+                </div>
+            </div></div>
+        </div>
+ 
+        <!-- 6 事故発生後の状況 -->
+        <div class="section-title">6 事故発生後の状況</div>
+        <div class="content-box">
+            <div class="row"><div class="rl">家族等への報告<small>報告した家族等の続柄</small></div><div class="rv">
+                <div class="chk-group" id="grp_family"></div>
+                <input type="text" id="family_other" placeholder="その他の続柄">
+            </div></div>
+            <div class="row"><div class="rl">連絡した関係機関<small>連絡した場合のみ</small></div><div class="rv">
+                <div class="chk-group" id="grp_agency"></div>
+                <div class="mini-grid">
+                    <input type="text" id="agency_city" placeholder="自治体名">
+                    <input type="text" id="agency_police" placeholder="警察署名">
+                    <input type="text" id="agency_other_name" placeholder="その他の名称">
+                </div>
+            </div></div>
+            <div class="row"><div class="rl">本人、家族、関係先等への追加対応<small>あれば</small></div><div class="rv"><textarea id="followup" style="min-height:40px;"></textarea></div></div>
+            <div class="row"><div class="rl">死亡年月<small>死亡に至った場合</small></div><div class="rv"><input type="month" id="death_ym" style="max-width:220px;"></div></div>
+        </div>
+ 
+        <!-- 7 事故の原因分析 -->
+        <div class="section-title"><span>7 事故の原因分析</span><span class="note">記入した観点は自動でチェックされます</span></div>
+        <div class="content-box">
+            <div class="row"><div class="rl">事故の分類</div><div class="rv"><div class="chk-group" id="grp_acc_class"></div></div></div>
+            <div id="cause-factors"></div>
+        </div>
+ 
+        <!-- 8 再発防止策 -->
+        <div class="section-title"><span>8 再発防止策</span><span class="note">再発防止策として取り組む事項</span></div>
+        <div class="content-box"><div id="prevent-factors"></div></div>
+ 
+        <!-- 9 その他 -->
+        <div class="section-title">9 その他特記すべき事項（あれば）</div>
+        <div class="content-box"><textarea id="special9" style="min-height:44px;"></textarea></div>
+ 
+        <div class="record-gen-section input-only" style="margin-top:15px; border:1px solid var(--orange); padding:10px; background:#fffaf5; border-radius:8px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px; align-items:center;">
+                <span style="font-weight:bold; color:var(--orange); font-size:0.9rem;">📝 記録転送用 (5W1Hまとめ)</span>
+                <button class="btn-pick" style="background:#34495e; color:white;" onclick="copyRecord()">コピー</button>
+            </div>
+            <textarea id="generated_record" readonly style="min-height:100px; font-size:12px;"></textarea>
+            <button class="btn" style="background:var(--orange); width:100%; margin-top:5px; font-size:0.9rem;" onclick="generateRecord()">✨ 5W1H形式で自動生成</button>
+        </div>
+ 
+        <div class="action-bar input-only">
+            <button class="btn" style="background:#0ea5e9;" onclick="newReport()">🆕 新規</button>
+            <button class="btn" style="background:var(--accent);" onclick="downloadJSON()">📁 保存</button>
+            <label class="btn" style="background:#64748b; cursor:pointer; margin:0; font-size:0.95rem; color:white;">📂 読込 <input type="file" id="load-file" accept=".json" style="display:none;" onchange="loadJSON(event)"></label>
+            <button class="btn btn-official" style="background:#6366f1;" onclick="openPreview()">👁 様式プレビュー</button>
+            <button class="btn btn-official" style="background:var(--primary);" onclick="printAs('official')">🖨️ 行政様式で印刷</button>
+            <button class="btn" style="background:var(--success);" onclick="printAs('internal')">🖨️ 事業所内控え</button>
+        </div>
+    </div>
+ 
+    <footer class="input-only">
+        ©️ONMUSUBI 2026 - Version 2.0<br>
+        事故報告様式：令和8年10月21日付 厚生労働省事務連絡（介護保険最新情報Vol.1548）の改正案に対応。<br>
+        改正案は調整中のため、令和9年4月頃の報告システム稼働時に様式が変わる可能性があります。
+    </footer>
+</div>
+ 
+<div id="official-print"></div>
+<div id="toast" class="toast"></div>
+ 
+<script>
+/* ================= 定義 ================= */
+const SCHEMA = 'jiko-v2';
+const KEY = { save: 'save_v2_0', master: 'master_v2_0', office: 'office_v2_0', saveV1: 'save_v1_0', masterV1: 'master_v1_0' };
+ 
+// 選択肢（値, 表示ラベル）。様式改正時はここを修正する。
+const OPT = {
+    report_kind: [['第1報', '第1報'], ['第n報', '第＿報'], ['最終報告', '最終報告']],
+    visit: ['受診(外来・往診)、自施設で処置', '入院', '死亡', 'その他'],
+    sex: ['男性', '女性'],
+    addr: ['事業所所在地と同じ', ['その他', 'その他（市区町村まで）']],
+    kaigo: ['要支援1', '要支援2', '要介護1', '要介護2', '要介護3', '要介護4', '要介護5', '自立'],
+    shogai: [['J', 'J ほぼ自立'], ['A', 'A 屋内自立(介助により外出可)'], ['B', 'B 要介助 座位保持可能'], ['C', 'C 全介助 寝たきり']],
+    ninchi: ['Ⅰ', 'Ⅱa', 'Ⅱb', 'Ⅲa', 'Ⅲb', 'Ⅳ', 'M'],
+    place: ['居室（個室）', '居室（多床室）', 'トイレ', '廊下', '食堂（ダイニング兼リビング）', '浴室・脱衣室', '機能訓練室', '医務室、健康管理室',
+            '共有スペース（リビング等）', '洗面所', '洗濯室', 'エレベーター', '玄関', '施設敷地内の建物外', '敷地外', '階段', '車両（乗降時含む）', 'その他'],
+    acc_type: ['転倒', '異食、誤飲', '強打、圧迫', '転落', '誤薬、与薬もれ等', '誤嚥・窒息', '所在不明', '医療処置関連（チューブ抜去等）',
+               '火傷', '溺水', '熱中症', '自傷行為', '利用者間トラブル', 'その他'],
+    med_method: ['施設内の医師(配置医含む)が対応', '受診(外来・往診)', '救急搬送', 'その他'],
+    diag: ['切傷・剥離', '捻挫・脱臼', '骨折', '気道閉塞', '熱傷', '死亡', 'その他'],
+    family: ['配偶者', '子または子の配偶者', 'その他'],
+    agency: ['他の自治体', '警察', 'その他'],
+    acc_class: ['利用者の日常生活動作中に発生した事故', '介助中等、職員が関与した事故']
+};
+const RADIO = new Set(['report_kind', 'sex', 'addr', 'kaigo', 'shogai', 'ninchi']);
+ 
+// 原因分析・再発防止策の観点（7と8で共通）
+const FACTORS = [
+    ['f_user', 'ケア利用者の行為や状態変化'],
+    ['f_org', '組織運営体制'],
+    ['f_manual', 'マニュアル、手順'],
+    ['f_env', '環境、設備'],
+    ['f_skill', '介護技術'],
+    ['f_comm', '職員間の連携、情報共有'],
+    ['f_other', 'その他']
+];
+ 
+// 「その他」等の補足欄に入力したら、対応する選択肢を自動でチェック
+const AUTO_CHECK = {
+    visit_other: ['visit', 'その他'], addr_city: ['addr', 'その他'], place_other: ['place', 'その他'],
+    acc_type_other: ['acc_type', 'その他'], med_other: ['med_method', 'その他'], hospital: ['med_method', '受診(外来・往診)'],
+    fracture_site: ['diag', '骨折'], diag_other: ['diag', 'その他'], family_other: ['family', 'その他'],
+    agency_city: ['agency', '他の自治体'], agency_police: ['agency', '警察'], agency_other_name: ['agency', 'その他'],
+    report_no_n: ['report_kind', '第n報']
+};
+ 
+const OFFICE_IDS = ['corp_name', 'corp_no', 'office_name', 'office_no', 'service_type', 'rooms', 'capacity', 'pref', 'city'];
+ 
+const impactData = {
+    "0": { type: "ヒヤリハット", degree: "実害なし", desc: "誤った行為が発生したが、患者に実施される前に発見されたか、実施されたが影響がなかった。" },
+    "1": { type: "インシデント", degree: "実害なし", desc: "影響の可能性はあるが実害なし。" },
+    "2": { type: "インシデント", degree: "軽度", desc: "処置・治療なし。観察強化。" },
+    "3a": { type: "インシデント", degree: "中程度", desc: "簡単な処置や治療を要した。" },
+    "3b": { type: "アクシデント", degree: "高度", desc: "濃厚な処置や治療を要した。" },
+    "4": { type: "アクシデント", degree: "高度", desc: "永続的な障害や後遺症。" },
+    "5": { type: "アクシデント", degree: "高度", desc: "死亡。" }
+};
+ 
+const DEFAULT_MASTER = {
+    before: ["普段と変わりなし。", "日中から傾眠傾向あり。", "食欲低下・倦怠感の訴えあり。", "夜間の不眠あり。"],
+    situation: ["歩行中にバランスを崩し転倒。", "食事中にむせ込み。", "配薬の取り違え。", "訪問時、床に座り込んでいるところを発見。"],
+    c_f_user: ["疾患（病気）の影響", "体調の変化", "ADL・身体機能の低下", "認知機能の低下", "転倒しやすい", "誤嚥しやすい"],
+    c_f_org: ["人員配置", "業務の偏り・多忙", "教育・研修不足"],
+    c_f_manual: ["手順ミス", "マニュアル不備", "手順の未周知"],
+    c_f_env: ["機器不備", "床濡れ", "照明不足", "整理整頓", "段差・動線"],
+    c_f_skill: ["確認不足", "慣れ", "焦り", "技術・知識不足", "疲労・体調"],
+    c_f_comm: ["連携不足", "申し送り漏れ", "情報共有不足"],
+    c_f_other: [],
+    p_f_user: ["状態変化時のアセスメント強化。", "主治医・ケアマネジャーへ報告し方針を確認。"],
+    p_f_org: ["人員配置・業務分担の見直し。", "事例検討会・研修の実施。"],
+    p_f_manual: ["手順書の見直しと周知。"],
+    p_f_env: ["環境整備（動線・照明・床面）。", "福祉用具の点検・見直し。"],
+    p_f_skill: ["見守りの強化。", "ダブルチェックの徹底。"],
+    p_f_comm: ["申し送り方法の統一。", "カンファレンスでの共有。"],
+    p_f_other: []
+};
+const labelMap = { before: "事故発生前の状況", situation: "発生時の状況（時系列）" };
+FACTORS.forEach(([k, l]) => { labelMap['c_' + k] = `原因：${l}`; labelMap['p_' + k] = `再発防止：${l}`; });
+ 
+let masterData = clone(DEFAULT_MASTER);
+let photoList = [];
+let saveTimer = null;
+ 
+/* ================= ユーティリティ ================= */
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function nl(s) { return esc(s).replace(/\n/g, '<br>'); }
+function optPair(o) { return Array.isArray(o) ? o : [o, o]; }
+function pad2(n) { return String(n).padStart(2, '0'); }
+function nowHHMM() { const d = new Date(); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function todayISO() { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function timeBand(dt) {
+    if (!dt || dt.length < 13) return '';
+    const s = Math.floor(parseInt(dt.slice(11, 13), 10) / 2) * 2;
+    return `${s}時～${s + 2}時`;
+}
+function ymText(v) { // "yyyy-mm" or "yyyy-mm-ddThh:mm" → yyyy年m月
+    if (!v || v.length < 7) return '';
+    return `${v.slice(0, 4)}年${parseInt(v.slice(5, 7), 10)}月`;
+}
+function ymdText(v) {
+    if (!v || v.length < 10) return '';
+    return `${v.slice(0, 4)}年${parseInt(v.slice(5, 7), 10)}月${parseInt(v.slice(8, 10), 10)}日`;
+}
+function withOther(arr, other, otherVal = 'その他') {
+    return (arr || []).map(v => (v === otherVal && other) ? `${v}（${other}）` : v).join('、');
+}
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.display = 'block';
+    clearTimeout(t._h); t._h = setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+function autoResize(el) { if (!el) return; el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
+function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'block' : 'none'; if (show && id === 'settingsModal') renderMasterEditor(); }
+ 
+/* ================= 描画 ================= */
+function renderGroups() {
+    Object.keys(OPT).forEach(g => {
+        const c = document.getElementById('grp_' + g);
+        if (!c) return;
+        c.innerHTML = '';
+        OPT[g].forEach(o => {
+            const [v, l] = optPair(o);
+            const lab = document.createElement('label'); lab.className = 'chk';
+            const inp = document.createElement('input');
+            inp.type = RADIO.has(g) ? 'radio' : 'checkbox';
+            inp.name = 'g_' + g; inp.value = v; inp.dataset.group = g;
+            lab.append(inp, document.createTextNode(l));
+            c.appendChild(lab);
+        });
+    });
+    const tb = document.getElementById('time_band');
+    tb.innerHTML = '<option value="">未選択</option>';
+    for (let h = 0; h < 24; h += 2) { const v = `${h}時～${h + 2}時`; tb.add(new Option(v + '頃', v)); }
+}
+ 
+function renderFactors() {
+    const cause = document.getElementById('cause-factors');
+    const prev = document.getElementById('prevent-factors');
+    cause.innerHTML = ''; prev.innerHTML = '';
+    FACTORS.forEach(([k, l]) => {
+        const c = document.createElement('div'); c.className = 'factor';
+        c.innerHTML = `<div class="factor-head"><label class="chk"><input type="checkbox" data-group="factors" name="g_factors" value="${k}"> ${esc(l)}</label>
+            <button class="btn-pick input-only" onclick="pickTo('c_${k}','cause_${k}')">📋 定型文</button></div>
+            <textarea id="cause_${k}" data-factor="${k}" placeholder="この観点の要因（該当する場合のみ）"></textarea>`;
+        cause.appendChild(c);
+        const p = document.createElement('div'); p.className = 'factor';
+        p.innerHTML = `<div class="factor-head"><span class="flabel">${esc(l)}</span>
+            <button class="btn-pick input-only" onclick="pickTo('p_${k}','prev_${k}')">📋 定型文</button></div>
+            <textarea id="prev_${k}" placeholder="取り組む事項"></textarea>`;
+        prev.appendChild(p);
+    });
+}
+ 
+/* ================= 時系列 ================= */
+function addTlRow(t = '', text = '') {
+    const c = document.getElementById('timeline');
+    const r = document.createElement('div'); r.className = 'tl-row';
+    r.innerHTML = `<input type="time" class="tl-t"><textarea class="tl-x" rows="1" placeholder="状況・対応"></textarea><button class="btn-del-row input-only" title="行を削除">×</button>`;
+    r.querySelector('.tl-t').value = t;
+    const x = r.querySelector('.tl-x'); x.value = text;
+    r.querySelector('button').onclick = () => { r.remove(); autoSave(); };
+    c.appendChild(r);
+    autoResize(x);
+    return r;
+}
+function readTimeline() {
+    return [...document.querySelectorAll('#timeline .tl-row')]
+        .map(r => ({ t: r.querySelector('.tl-t').value, text: r.querySelector('.tl-x').value }))
+        .filter(x => x.t || x.text.trim());
+}
+ 
+/* ================= データ収集・反映 ================= */
+function fieldEls() {
+    return [...document.querySelectorAll('.card input[id], .card select[id], .card textarea[id]')].filter(el => el.type !== 'file');
+}
+function collect() {
+    const d = { schema: SCHEMA, savedAt: new Date().toISOString(), groups: {} };
+    fieldEls().forEach(el => { d[el.id] = el.value; });
+    document.querySelectorAll('.card input[data-group]').forEach(el => {
+        const g = el.dataset.group;
+        if (!d.groups[g]) d.groups[g] = [];
+        if (el.checked) d.groups[g].push(el.value);
+    });
+    d.timeline = readTimeline();
+    d.photos = photoList;
+    return d;
+}
+function apply(d) {
+    fieldEls().forEach(el => {
+        const v = d[el.id];
+        if (el.tagName === 'SELECT') { el.value = v ?? ''; if (el.selectedIndex < 0) el.selectedIndex = 0; }
+        else el.value = v ?? '';
+    });
+    const G = d.groups || {};
+    document.querySelectorAll('.card input[data-group]').forEach(el => { el.checked = (G[el.dataset.group] || []).includes(el.value); });
+    document.getElementById('timeline').innerHTML = '';
+    const tl = d.timeline || [];
+    tl.forEach(r => addTlRow(r.t, r.text));
+    for (let i = tl.length; i < 3; i++) addTlRow();
+    photoList = d.photos || [];
+    renderPhotos();
+    updateImpactUI();
+    updateDerived();
+    setTimeout(() => document.querySelectorAll('textarea').forEach(autoResize), 50);
+}
+ 
+function autoSave() {
+    clearTimeout(saveTimer);
+    try { localStorage.setItem(KEY.save, JSON.stringify(collect())); }
+    catch (err) { showToast('自動保存できませんでした（写真の容量が大きい可能性があります）。📁保存でファイルに書き出してください。'); }
+    updateStatus();
+}
+function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(autoSave, 300); }
+ 
+function onEdit(e) {
+    const el = e.target;
+    if (!el.closest || !el.closest('.card')) return;
+    if (el.type === 'file') return;
+    if (el.tagName === 'TEXTAREA') autoResize(el);
+    if (el.dataset && el.dataset.factor && el.value.trim()) {
+        const cb = document.querySelector(`input[data-group="factors"][value="${el.dataset.factor}"]`);
+        if (cb) cb.checked = true;
+    }
+    if (AUTO_CHECK[el.id] && el.value.trim()) {
+        const [g, v] = AUTO_CHECK[el.id];
+        const cb = document.querySelector(`input[data-group="${g}"][value="${v}"]`);
+        if (cb) cb.checked = true;
+    }
+    if (el.id === 'event_date' && el.value) { document.getElementById('time_band').value = timeBand(el.value); }
+    if (el.id === 'event_date' || el.id === 'time_band') updateDerived();
+    scheduleSave();
+}
+document.addEventListener('input', onEdit);
+document.addEventListener('change', onEdit);
+ 
+function updateDerived() {
+    const ev = document.getElementById('event_date').value;
+    const tb = document.getElementById('time_band').value;
+    const box = document.getElementById('derived_dt');
+    if (!ev && !tb) { box.textContent = '発生日時を入力すると、様式上の記載（年月・時間帯）を自動で作成します。'; return; }
+    box.textContent = `様式上の記載 → 発生年月：${ymText(ev) || '（未入力）'}　時間帯：${tb ? tb + '頃' : '（未選択）'}`;
+}
+ 
+/* ================= 状態表示（第1報チェック・提出目安） ================= */
+function updateStatus() {
+    const d = collect(), G = d.groups;
+    const box = document.getElementById('status-box');
+    const hh = d.main_title_select === 'ヒヤリハット報告';
+    document.querySelectorAll('.btn-official').forEach(b => b.disabled = hh);
+    if (hh) {
+        box.className = 'status-box hh input-only';
+        box.innerHTML = 'ヒヤリハット報告は事業所内の記録です（市町村への事故報告の対象外のため、行政様式の出力はオフ）。';
+        return;
+    }
+    const has = g => (G[g] || []).length > 0;
+    const req = [
+        ['1 受診状況', has('visit')],
+        ['2 事業所名', !!d.office_name], ['2 サービス種別', !!d.service_type],
+        ['3 年齢', !!d.age], ['3 性別', has('sex')], ['3 要介護度', has('kaigo')],
+        ['4 発生年月・時間帯', !!d.event_date && !!d.time_band], ['4 発生場所', has('place')], ['4 事故の種別', has('acc_type')],
+        ['4 発生時の状況', d.timeline.length > 0],
+        ['5 受診方法', has('med_method')],
+        ['6 家族等への報告', has('family')]
+    ];
+    const missing = req.filter(r => !r[1]).map(r => r[0]);
+    let deadline = '';
+    if (d.event_date) {
+        const ev = new Date(d.event_date.slice(0, 10) + 'T00:00:00');
+        const dl = new Date(ev); dl.setDate(dl.getDate() + 5);
+        const today = new Date(todayISO() + 'T00:00:00');
+        const days = Math.round((dl - today) / 86400000);
+        const md = `${dl.getMonth() + 1}/${dl.getDate()}`;
+        deadline = days >= 0 ? `第1報の提出目安：${md}まで（あと${days}日）` : `<span class="late">第1報の提出目安（${md}）を${-days}日超過</span>`;
+    }
+    const done = req.length - missing.length;
+    box.className = 'status-box input-only' + (missing.length ? ' warn' : '');
+    box.innerHTML = `<div><b>第1報（項目1〜6）入力状況：${done}/${req.length}</b>${deadline ? '　' + deadline : ''}</div>` +
+        (missing.length ? `<div class="missing">未入力：${missing.join('、')}</div>` : '<div class="missing">第1報に必要な主な項目は入力済みです。</div>');
+}
+ 
+/* ================= 行政提出様式 ================= */
+function renderOfficial() {
+    const d = collect(), G = d.groups;
+    const mk = (g, v) => (G[g] || []).includes(v) ? '■' : '□';
+    const opts = (g, extra = {}) => OPT[g].map(o => {
+        const [v, l] = optPair(o);
+        let s = `<span class="op">${mk(g, v)} ${esc(l)}`;
+        if (v in extra) s += `（${esc(extra[v]) || '　　'}）`;
+        return s + '</span>';
+    }).join('');
+    const sub = (label, val) => `<span class="sub">${esc(label)}</span> ${esc(val)}`;
+    const section = (num, title, rows) => `<table class="of"><colgroup><col style="width:13mm"><col style="width:38mm"><col></colgroup>` +
+        rows.map((r, i) => `<tr>${i === 0 ? `<th class="sec" rowspan="${rows.length}"><b>${num}</b>${title}</th>` : ''}<th class="lb">${r[0]}</th><td>${r[1]}</td></tr>`).join('') +
+        `</table>`;
+ 
+    // 時系列（最低10行）
+    const tl = d.timeline.slice();
+    while (tl.length < 10) tl.push({ t: '', text: '' });
+    const tlHtml = `<table class="tl"><tr><td class="t"><b>時間</b></td><td><b>発生時の状況と対応</b></td></tr>` +
+        tl.map(r => `<tr><td class="t">${esc(r.t) || '&nbsp;'}</td><td>${nl(r.text) || '&nbsp;'}</td></tr>`).join('') + `</table>`;
+ 
+    const factorMarks = FACTORS.map(([k, l]) => `<span class="op">${mk('factors', k)} ${esc(l)}</span>`).join('');
+    const kindN = d.report_no_n ? esc(d.report_no_n) : '＿';
+    const to = d.insurer ? esc(d.insurer) : '○○市（町村）';
+ 
+    let html = `<div class="of-doc">
+        <div class="of-head"><div class="of-title">事故報告書　（事業者→${to}）</div></div>
+        <div class="of-notes">※第１報は、少なくとも1から6までについては可能な限り記載し、事故発生後速やかに、遅くとも５日以内を目安に提出すること<br>
+        ※選択肢については該当する項目をチェックし、該当する項目が複数ある場合は全て選択すること</div>
+        <div class="of-kind"><span>${mk('report_kind', '第1報')} 第1報　　${mk('report_kind', '第n報')} 第${kindN}報　　${mk('report_kind', '最終報告')} 最終報告</span>
+            <span>提出日：${ymdText(d.submit_date) || '　　年　月　日'}</span></div>
+        <div class="of-instr">↓以下、選択式の設問については 該当するものを ■ にする</div>`;
+ 
+    html += section(1, '受診状況', [
+        ['医療機関への受診状況', opts('visit', { 'その他': d.visit_other })]
+    ]);
+    html += section(2, '事業所の概要', [
+        ['法人名', `${esc(d.corp_name)}${sub('法人番号', d.corp_no)}`],
+        ['事業所（施設）名', `${esc(d.office_name)}${sub('事業所番号', d.office_no)}`],
+        ['サービス種別（介護予防含む）', `${esc(d.service_type)}${sub('室数', d.rooms)}${sub('定員', d.capacity)}`],
+        ['所在地（市区町村まで）', `${esc(d.pref)}　${esc(d.city)}`]
+    ]);
+    html += section(3, '利用者', [
+        ['年齢・性別', `年齢 ${esc(d.age) || '　　'} 歳　　性別 ${opts('sex')}`],
+        ['サービス提供開始年月', `${ymText(d.start_ym)}${sub('保険者', d.insurer)}`],
+        ['住所', opts('addr', { 'その他': d.addr_city })],
+        ['要介護度', opts('kaigo')],
+        ['障害高齢者の日常生活自立度（寝たきり度）', opts('shogai')],
+        ['認知症高齢者日常生活自立度', opts('ninchi')]
+    ]);
+    html += section(4, '事故の概要', [
+        ['発生年月と時間帯', `${ymText(d.event_date) || '　　年　月'}　　${d.time_band ? esc(d.time_band) + '頃' : '　　時頃'}（2時間ごと）`],
+        ['発生場所', opts('place', { 'その他': d.place_other })],
+        ['事故の種別', opts('acc_type', { 'その他': d.acc_type_other })],
+        ['事故発生前の利用者の状況・状態', nl(d.before_state)],
+        ['発生時の状況、事故内容の詳細と発生時の対応', tlHtml],
+        ['その他特記すべき事項', nl(d.special4)]
+    ]);
+    html += section(5, '医療対応の概要', [
+        ['受診方法', opts('med_method', { 'その他': d.med_other })],
+        ['受診先', sub('医療機関名', d.hospital)],
+        ['診断名', esc(d.diag_name)],
+        ['診断内容', opts('diag', { '骨折': d.fracture_site ? '部位：' + d.fracture_site : '部位：', 'その他': d.diag_other })]
+    ]);
+    html += section(6, '事故発生後の状況', [
+        ['家族等への報告（報告した家族等の続柄）', opts('family', { 'その他': d.family_other })],
+        ['連絡した関係機関（連絡した場合のみ）', `${opts('agency')}<br>自治体名（${esc(d.agency_city) || '　　'}）　警察署名（${esc(d.agency_police) || '　　'}）　名称（${esc(d.agency_other_name) || '　　'}）`],
+        ['本人、家族、関係先等への追加対応（あれば）', nl(d.followup)],
+        ['※死亡に至った場合 死亡年月', ymText(d.death_ym)]
+    ]);
+    html += section(7, '事故の原因分析', [
+        ['事故の分類', opts('acc_class')],
+        ['要因の観点', `<span class="nt">（事故発生に起因する要素のある観点についてチェックをして記入）※複数選択可</span><br>${factorMarks}`],
+        ...FACTORS.map(([k, l]) => [esc(l), nl(d['cause_' + k])])
+    ]);
+    html += section(8, '再発防止策', [
+        ['', '<span class="nt">（再発防止策として取り組む事項を記載すること）</span>'],
+        ...FACTORS.map(([k, l]) => [esc(l), nl(d['prev_' + k])])
+    ]);
+    html += section(9, 'その他', [
+        ['その他特記すべき事項（あれば）', nl(d.special9)]
+    ]);
+    html += `</div>`;
+    return html;
+}
+function openPreview() {
+    document.getElementById('preview-body').innerHTML = renderOfficial();
+    toggleModal('previewModal', true);
+}
+function printAs(mode) {
+    autoSave();
+    if (mode === 'official') document.getElementById('official-print').innerHTML = renderOfficial();
+    document.body.dataset.print = mode;
+    toggleModal('previewModal', false);
+    setTimeout(() => window.print(), 50);
+}
+window.addEventListener('afterprint', () => { delete document.body.dataset.print; });
+ 
+/* ================= 既存機能（影響レベル・写真・定型文） ================= */
+function updateTitleUI(byUser) {
+    const titleVal = document.getElementById('main_title_select').value;
+    if (byUser && titleVal === "ヒヤリハット報告") { document.getElementById('impact_level').value = "0"; updateImpactUI(); }
+    autoSave();
+}
+function updateImpactUI() {
+    const val = document.getElementById('impact_level').value;
+    const badge = document.getElementById('impact_type_badge');
+    const text = document.getElementById('impact_text');
+    if (val && impactData[val]) {
+        const d = impactData[val];
+        const color = d.type === "アクシデント" ? "var(--danger)" : (d.type === "ヒヤリハット" ? "var(--info)" : "var(--success)");
+        badge.innerHTML = `<span class="impact-badge" style="background:${color}">${d.type}</span>`;
+        text.innerText = d.desc;
+    } else { badge.innerHTML = ""; text.innerText = "レベルを選択すると基準が表示されます"; }
+}
+function handlePhotos(event) {
+    for (const file of event.target.files) {
+        const reader = new FileReader();
+        reader.onload = (e) => { photoList.push(e.target.result); renderPhotos(); autoSave(); };
+        reader.readAsDataURL(file);
+    }
+    event.target.value = '';
+}
+function renderPhotos() {
+    const container = document.getElementById('photo-list');
+    container.innerHTML = "";
+    photoList.forEach((src, idx) => {
+        const div = document.createElement('div'); div.className = 'photo-item';
+        div.innerHTML = `<img src="${src}"><button class="btn-del-img input-only" onclick="removePhoto(${idx}, event)">×</button>`;
+        container.appendChild(div);
+    });
+}
+function removePhoto(idx, e) { e.stopPropagation(); photoList.splice(idx, 1); renderPhotos(); autoSave(); }
+ 
+function renderMasterEditor() {
+    const container = document.getElementById('master-editor');
+    container.innerHTML = "";
+    Object.keys(DEFAULT_MASTER).forEach(key => {
+        if (!masterData[key]) masterData[key] = [];
+        const wrap = document.createElement('div');
+        const h = document.createElement('h4'); h.textContent = labelMap[key] || key; h.style.margin = '14px 0 6px';
+        wrap.appendChild(h);
+        masterData[key].forEach((val, idx) => {
+            const row = document.createElement('div'); row.style = 'display:flex; gap:4px; margin-bottom:4px;';
+            const inp = document.createElement('input'); inp.type = 'text'; inp.value = val;
+            inp.onchange = () => { masterData[key][idx] = inp.value; };
+            const del = document.createElement('button'); del.textContent = '×'; del.style = 'width:36px;';
+            del.onclick = () => { masterData[key].splice(idx, 1); renderMasterEditor(); };
+            row.append(inp, del); wrap.appendChild(row);
+        });
+        const add = document.createElement('button'); add.textContent = '+ 追加';
+        add.onclick = () => { masterData[key].push(''); renderMasterEditor(); };
+        wrap.appendChild(add);
+        container.appendChild(wrap);
+    });
+}
+function saveMaster() {
+    Object.keys(masterData).forEach(k => { masterData[k] = masterData[k].filter(v => v.trim()); });
+    localStorage.setItem(KEY.master, JSON.stringify(masterData));
+    toggleModal('settingsModal', false);
+    showToast('定型文を保存しました');
+}
+// target: 要素ID（追記）または関数
+function pickTo(masterKey, target) {
+    const list = document.getElementById('picker-list');
+    document.getElementById('picker-title').innerText = `${labelMap[masterKey] || ''}を選択`;
+    list.innerHTML = "";
+    const items = masterData[masterKey] || [];
+    if (!items.length) list.innerHTML = '<p class="hint">定型文が未登録です。右上の⚙️から登録できます。</p>';
+    items.forEach(text => {
+        const b = document.createElement('button'); b.className = "btn";
+        b.style = "background:#f0f4f8; color:#333; font-size:13px; text-align:left; font-weight:normal; border:1px solid #ddd; justify-content:flex-start;";
+        b.innerText = text;
+        b.onclick = () => {
+            if (typeof target === 'function') target(text);
+            else {
+                const el = document.getElementById(target);
+                el.value += (el.value ? "\n" : "") + text;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            toggleModal('pickerModal', false);
+            autoSave();
+        };
+        list.appendChild(b);
+    });
+    toggleModal('pickerModal', true);
+}
+function setOther(id, text) {
+    const el = document.getElementById(id);
+    el.value = text;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+ 
+/* ================= 5W1H ================= */
+function generateRecord() {
+    const d = collect(), G = d.groups;
+    const when = d.event_date
+        ? new Date(d.event_date).toLocaleString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : (d.time_band ? d.time_band + '頃' : '不明');
+    const where = withOther(G.place, d.place_other) || '-';
+    const kind = withOther(G.acc_type, d.acc_type_other) || '事象';
+    const who = d.user_name || '利用者';
+    const reporter = d.reporter || '担当者';
+    const what = d.timeline.map(r => `${r.t || '--:--'} ${r.text}`).join('\n') || '-';
+    const why = FACTORS.filter(([k]) => (d['cause_' + k] || '').trim()).map(([k, l]) => `【${l}】${d['cause_' + k]}`).join('\n') || '-';
+    const how = FACTORS.filter(([k]) => (d['prev_' + k] || '').trim()).map(([k, l]) => `【${l}】${d['prev_' + k]}`).join('\n') || '-';
+    let text = `【${kind}報告：5W1H形式】\n■When: ${when}\n■Where: ${where}\n■Who: ${who} (報告者: ${reporter})\n■What:\n`;
+    if (d.before_state) text += `（発生前の状態）${d.before_state}\n`;
+    text += `${what}\n■Why:\n${why}\n■How:\n${how}`;
+    const med = [withOther(G.med_method, d.med_other), d.hospital, d.diag_name].filter(Boolean).join(' / ');
+    if (med) text += `\n■受診・診断: ${med}`;
+    const fam = withOther(G.family, d.family_other);
+    if (fam) text += `\n■家族等への報告: ${fam}`;
+    const el = document.getElementById('generated_record');
+    el.value = text; autoResize(el); autoSave();
+}
+function copyRecord() { navigator.clipboard.writeText(document.getElementById('generated_record').value).then(() => showToast("コピーしました")); }
+ 
+/* ================= 事業所情報・新規 ================= */
+function saveOffice() {
+    const o = {}; OFFICE_IDS.forEach(id => o[id] = document.getElementById(id).value);
+    localStorage.setItem(KEY.office, JSON.stringify(o));
+    showToast('事業所情報を既定値として保存しました（新規作成時に自動入力）');
+}
+function officeDefaults() { try { return JSON.parse(localStorage.getItem(KEY.office) || '{}'); } catch { return {}; } }
+function blankReport() {
+    return Object.assign({ schema: SCHEMA, submit_date: todayISO(), groups: { report_kind: ['第1報'] }, timeline: [], photos: [] }, officeDefaults());
+}
+function newReport() {
+    if (!confirm('現在の入力内容を消去して新規作成します。必要なら先に「📁 保存」してください。よろしいですか？')) return;
+    apply(blankReport()); autoSave(); window.scrollTo(0, 0);
+}
+ 
+/* ================= V1.0 からの移行 ================= */
+function migrateV1(o) {
+    const d = { schema: SCHEMA, groups: { report_kind: ['第1報'] }, submit_date: todayISO() };
+    ['main_title_select', 'user_name', 'reporter', 'event_date', 'impact_level', 'v_temp', 'v_bp', 'v_hr', 'v_rr', 'v_spo2', 'injury', 'generated_record']
+        .forEach(k => { if (o[k] != null) d[k] = o[k]; });
+    // 区分 → 事故の種別
+    const cmap = { '転倒': '転倒', '転落': '転落', '薬関連': '誤薬、与薬もれ等', '嚥下・誤飲': '誤嚥・窒息' };
+    if (o.category) {
+        if (cmap[o.category]) d.groups.acc_type = [cmap[o.category]];
+        else { d.groups.acc_type = ['その他']; d.acc_type_other = o.category; }
+    }
+    if (o.location) { d.groups.place = ['その他']; d.place_other = o.location; }
+    if (o.event_date) d.time_band = timeBand(o.event_date);
+    d.timeline = o.situation ? [{ t: (o.event_date || '').slice(11, 16), text: o.situation }] : [];
+    // 5M → 7観点
+    const lab2key = { '利用者': 'f_user', '職員': 'f_skill', '環境': 'f_env', '手順': 'f_manual', '管理': 'f_org' };
+    const facs = new Set(), rest = [];
+    (o.analysis_text || '').split('\n').forEach(line => {
+        const m = line.match(/^【(.+?)】(.*)$/);
+        if (m && lab2key[m[1]]) {
+            const k = lab2key[m[1]];
+            d['cause_' + k] = (d['cause_' + k] ? d['cause_' + k] + '\n' : '') + m[2];
+            facs.add(k);
+        } else if (line.trim()) rest.push(line);
+    });
+    if (rest.length) { d.cause_f_other = rest.join('\n'); facs.add('f_other'); }
+    d.groups.factors = [...facs];
+    if (o.prevent) d.prev_f_other = o.prevent;
+    d.photos = o.photos || [];
+    return Object.assign(officeDefaults(), d);
+}
+function migrateMasterV1(m) {
+    const out = clone(DEFAULT_MASTER);
+    const merge = (to, from) => { (from || []).forEach(v => { if (v && !out[to].includes(v)) out[to].push(v); }); };
+    merge('c_f_user', m.m_user); merge('c_f_skill', m.m_staff); merge('c_f_env', m.m_mac);
+    merge('c_f_manual', m.m_met); merge('c_f_org', m.m_mng);
+    merge('situation', m.situation); merge('p_f_other', m.prevent);
+    return out;
+}
+ 
+/* ================= ファイル保存・読込 ================= */
+function downloadJSON() {
+    autoSave();
+    const d = collect();
+    const blob = new Blob([JSON.stringify(d)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `report_${(d.event_date || '').slice(0, 10) || 'nodate'}_${Date.now()}.json`; a.click();
+}
+function loadJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            let data = JSON.parse(e.target.result);
+            const fromV1 = data.schema !== SCHEMA;
+            if (fromV1) data = migrateV1(data);
+            apply(data); autoSave();
+            showToast(fromV1 ? '旧形式（V1.0）のデータを新様式に変換して読み込みました。種別・場所・原因分析を確認してください。' : 'データを読み込みました');
+        } catch (err) { alert("JSONファイルの形式が不正です。"); }
+        event.target.value = "";
+    };
+    reader.readAsText(file);
+}
+ 
+function loadData() {
+    const m2 = localStorage.getItem(KEY.master), m1 = localStorage.getItem(KEY.masterV1);
+    try {
+        if (m2) masterData = Object.assign(clone(DEFAULT_MASTER), JSON.parse(m2));
+        else if (m1) { masterData = migrateMasterV1(JSON.parse(m1)); localStorage.setItem(KEY.master, JSON.stringify(masterData)); }
+    } catch { masterData = clone(DEFAULT_MASTER); }
+ 
+    renderGroups();
+    renderFactors();
+ 
+    const s2 = localStorage.getItem(KEY.save), s1 = localStorage.getItem(KEY.saveV1);
+    try {
+        if (s2) apply(JSON.parse(s2));
+        else if (s1) { apply(migrateV1(JSON.parse(s1))); autoSave(); showToast('V1.0の入力中データを新様式に移行しました。種別・場所・原因分析を確認してください。'); }
+        else apply(blankReport());
+    } catch { apply(blankReport()); }
+    updateStatus();
+}
+window.onload = loadData;
+</script>
+</body>
+</html>
